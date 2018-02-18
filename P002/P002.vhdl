@@ -22,10 +22,8 @@ architecture behaviour of P002 is
 	signal sum_even: unsigned(32 downto 0);
 	signal overflow: std_logic := '0';
 begin
-	process (clk, ext_ref, state)
+	process (clk, ext_ref)
 	begin
-
-
 		if in_ref /= ext_ref then
 			state <= converting;
 			Fn1 <= x"00000001";
