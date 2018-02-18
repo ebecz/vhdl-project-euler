@@ -1,21 +1,21 @@
 
-all: main
+all: testbench
 
 %.o: %.vhdl
 	ghdl -a $<
 
-main.o: main.vhdl P001.o
+testbench.o: testbench.vhdl P001.o
 
-main: main.o P001.o
+testbench: testbench.o P001.o
 	ghdl -e $@
 
-test.ghw: main
-	./main --wave=$@
+test.ghw: testbench
+	./testbench --wave=$@
 
 show: test.ghw
 	gtkwave $<
 
 clean:
-	rm -f *.o main work-obj93.cf test.ghw
+	rm -f *.o testbench work-obj93.cf test.ghw
 
 .PHONY: clean show

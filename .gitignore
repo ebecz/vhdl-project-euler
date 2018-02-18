@@ -1,5 +1,5 @@
 *.swp
 *.o
-main
+testbench
 work-obj93.cf
 *.ghw

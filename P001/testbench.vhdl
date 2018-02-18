@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all; -- Unsigned
 use std.textio.all; -- Imports the standard textio package.
 
-entity main is
-end main;
+entity testbench is
+end testbench;
 
-architecture behaviour of main is
+architecture behaviour of testbench is
 	component P001
 		port(
 			input   : in std_logic_vector(15 downto 0);
