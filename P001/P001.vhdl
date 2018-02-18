@@ -19,10 +19,8 @@ architecture behaviour of P001 is
 	signal counter: unsigned(15 downto 0);
 	signal sum: unsigned(31 downto 0);
 begin
-	process (clk, ext_ref, state)
+	process (clk, ext_ref)
 	begin
-
-
 		if in_ref /= ext_ref then
 			state <= converting;
 			counter <= x"0000";
