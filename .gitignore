@@ -1,5 +1,6 @@
 *.swp
 *.o
+*.ghw
 main
 work-obj93.cf
 
