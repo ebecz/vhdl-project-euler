@@ -26,6 +26,7 @@ begin
 
 	process
 		variable l : line;
+		variable cycles : integer := 0;
 	begin
 		input <= x"0000008BE589EAC7";
 		-- Why do I have a error here?
@@ -33,9 +34,17 @@ begin
 		wait for 1 fs;
 		clkloop : loop
 			clk <= not clk;
+			cycles := cycles + 1;
 			if busy = '0' then
+
+				write (l, string'("Result:"));
 				write (l, integer'image(to_integer(result)));
 				writeline (output, l);
+
+				write (l, string'("Cycles:"));
+				write (l, integer'image(cycles));
+				writeline (output, l);
+
 				exit;
 			end if;
 			wait for 2 fs;
