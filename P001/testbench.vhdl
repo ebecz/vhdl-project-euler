@@ -7,15 +7,6 @@ entity testbench is
 end testbench;
 
 architecture behaviour of testbench is
-	component P001
-		port(
-			input   : in std_logic_vector(15 downto 0);
-			clk     : in std_logic;
-			rst_n	: in std_logic;
-			busy    : out std_logic;
-			result  : out std_logic_vector(31 downto 0)
-		);
-	end component;
 
 	signal clk     : std_logic := '0';
 	signal rst_n   : std_logic := '0';
@@ -24,7 +15,7 @@ architecture behaviour of testbench is
 	signal value   : std_logic_vector(15 downto 0);
 
 begin
-	P001_0: P001 port map(
+	P001_0: entity work.P001 port map(
 		input => value,
 		clk => clk,
 		rst_n => rst_n,
