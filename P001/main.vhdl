@@ -9,41 +9,48 @@ end main;
 architecture behaviour of main is
 	component P001
 		port(
-			ext_ref : in unsigned(15 downto 0);
+			input   : in std_logic_vector(15 downto 0);
 			clk     : in std_logic;
+			rst_n	: in std_logic;
 			busy    : out std_logic;
-			result  : out unsigned(31 downto 0)
+			result  : out std_logic_vector(31 downto 0)
 		);
 	end component;
 
 	signal clk     : std_logic := '0';
+	signal rst_n   : std_logic := '0';
 	signal busy    : std_logic;
-	signal result  : unsigned(31 downto 0);
-	signal value   : unsigned(15 downto 0) := x"0000";
+	signal result  : std_logic_vector(31 downto 0);
+	signal value   : std_logic_vector(15 downto 0);
 
 begin
 	P001_0: P001 port map(
-		value,
-		clk,
-		busy,
-		result
+		input => value,
+		clk => clk,
+		rst_n => rst_n,
+		busy => busy,
+		result => result
 	);
 
 	process
 		variable l : line;
 	begin
-		value <= to_unsigned(1000, 16); 
+		wait until clk = '1';
+		value <= std_logic_vector(to_unsigned(1000, 16));
+		rst_n <= '1';
+		wait until busy = '0';
+		write (l, to_integer(unsigned(result)));
+		writeline (output, l);
+		wait;
+	end process;
+
+	process
+	begin
 		wait for 1 fs;
-		clkloop : loop
+		while busy = '1' loop
 			clk <= not clk;
-			if busy = '0' then
-				write (l, integer'image(to_integer(result)));
-				writeline (output, l);
-				exit;
-			end if;
-			wait for 2 fs;
-		end loop clkloop;
-		wait for 2 fs;
+			wait for 1 fs;
+		end loop; 
 		wait;
 	end process;
 end behaviour;
