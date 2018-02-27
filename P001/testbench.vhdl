@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all; -- Unsigned
 use std.textio.all; -- Imports the standard textio package.
+use std.env.all;
 
 entity testbench is
 end testbench;
@@ -52,18 +53,14 @@ begin
 				severity error;
 		end loop;
 		report "end of test" severity note;
-		--  Wait forever; this will finish the simulation.
-		clocking <= '0';
-		wait;
+		stop;
 	end process;
 
 	process
 	begin
+		clk <= '1';
 		wait for 1 fs;
-		while clocking = '1' loop
-			clk <= not clk;
-			wait for 1 fs;
-		end loop; 
-		wait;
+		clk <= '0';
+		wait for 1 fs;
 	end process;
 end behaviour;
