@@ -42,16 +42,16 @@ begin
 			value <= std_logic_vector(to_unsigned(patterns(i).value, 16));
 			-- Reset
 			rst_n <= '0';
-			wait for 1 fs;
+			wait until clk = '1';
 			rst_n <= '1'; 
 			--  Wait for the results.
 			wait until busy = '0';
 			--  Check the outputs.
-			assert to_integer(unsigned(result)) = patterns(i).result
+			assert unsigned(result) = patterns(i).result
 				report "bad result value on test " & integer'image(i)
 				severity error;
 		end loop;
-		assert false report "end of test" severity note;
+		report "end of test" severity note;
 		--  Wait forever; this will finish the simulation.
 		clocking <= '0';
 		wait;

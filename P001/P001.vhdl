@@ -19,12 +19,12 @@ architecture behaviour of P001 is
 	signal internal_input : unsigned(15 downto 0);
 	signal counter: unsigned(15 downto 0);
 	signal sum: unsigned(31 downto 0);
-	signal counter_0_to_2: integer;
-	signal counter_0_to_4: integer;
+	signal counter_0_to_2: integer range 0 to 2;
+	signal counter_0_to_4: integer range 0 to 4;
 begin
 	process (clk, rst_n)
 	begin
-		if rst_n /= '1' then
+		if rst_n = '0' then
 			state     <= init;
 			counter   <= x"0001";
 			sum       <= x"00000000";
