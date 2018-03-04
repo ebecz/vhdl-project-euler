@@ -14,7 +14,7 @@ entity P001 is
 end P001;
 
 architecture behaviour of P001 is
-	type conv_states is (init, waiting, converting);
+	type conv_states is (waiting, converting);
 
 	signal state: conv_states := waiting;
 	signal internal_input: unsigned(15 downto 0);
@@ -34,19 +34,12 @@ begin
 	process (clk, rst_n)
 	begin
 		if rst_n = '0' then
-			state          <= init;
+			state          <= waiting;
 			counter        <= x"0001";
 			sum            <= x"00000000";
-			result         <= (others => '0');
-			busy           <= '1';
-			counter_0_to_2 <= 0;	
+			counter_0_to_2 <= 0;
 			counter_0_to_4 <= 0;
-
-			state_next          <= init;
-			counter_next        <= x"0001";
-			sum_next            <= x"00000000";
-			counter_0_to_2_next <= 0;	
-			counter_0_to_4_next <= 0;
+			internal_input <= (others => '0');
 		elsif rising_edge(clk) then
 			state          <= state_next;
 			internal_input <= internal_input_next;
@@ -57,20 +50,21 @@ begin
 		end if;
 	end process;
 
-	process (state, internal_input, counter, sum, counter_0_to_2, counter_0_to_4)
+	process (state, internal_input, counter, sum, counter_0_to_2, counter_0_to_4, input)
 	begin
 		case state is
-			when init =>
-				internal_input_next <= unsigned(input);
-				state_next  <= converting;
 			when converting =>
+
+				busy <= '1';
 
 				if counter = internal_input then
 					state_next <= waiting;
 					result <= std_logic_vector(sum);
-				elsif (counter_0_to_2 = 2) or (counter_0_to_4 = 4) then
+				else
 					state_next <= converting;
-					sum_next  <= sum + counter;
+					if (counter_0_to_2 = 2) or (counter_0_to_4 = 4) then
+						sum_next  <= sum + counter;
+					end if;
 				end if;
 
 				counter_next <= counter + 1;
@@ -90,8 +84,22 @@ begin
 				end case;
 
 			when waiting =>
-				busy <= '0';
+
+				if internal_input /= unsigned(input) then
+					internal_input_next <= unsigned(input);
+					state_next          <= converting;
+					busy <= '1';
+				else
+					state_next <= waiting;
+					busy <= '0';
+				end if;
+
+				counter_next        <= x"0001";
+				sum_next            <= x"00000000";
+				counter_0_to_2_next <= 0;
+				counter_0_to_4_next <= 0;
 		end case;
 	end process;
 
 end behaviour;
+

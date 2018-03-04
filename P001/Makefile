@@ -10,7 +10,7 @@ testbench: testbench.o P001.o
 	ghdl -e --std=08 $@
 
 test.ghw: testbench
-	./testbench --wave=$@ --stop-time=1ns
+	./testbench --wave=$@
 
 show: test.ghw
 	gtkwave $<
