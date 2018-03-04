@@ -2,12 +2,12 @@
 all: testbench
 
 %.o: %.vhdl
-	ghdl -a $<
+	ghdl -a --std=08 $<
 
 testbench.o: testbench.vhdl P001.o
 
 testbench: testbench.o P001.o
-	ghdl -e $@
+	ghdl -e --std=08 $@
 
 test.ghw: testbench
 	./testbench --wave=$@
