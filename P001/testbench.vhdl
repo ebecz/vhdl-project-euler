@@ -19,11 +19,11 @@ architecture behaviour of testbench is
 
 begin
 	P001_0: entity work.P001 port map(
-		input => value,
-		clk => clk,
-		rst_n => rst_n,
-		busy => busy,
-		result => result
+		input    => value,
+		clk      => clk,
+		rst_n    => rst_n,
+		busy_o   => busy,
+		result_o => result
 	);
 
 	process
