@@ -13,7 +13,7 @@ architecture behaviour of testbench is
 	signal rst_n   : std_logic := '0';
 	signal busy    : std_logic;
 	signal result  : std_logic_vector(31 downto 0);
-	signal value   : std_logic_vector(15 downto 0);
+	signal value   : std_logic_vector(15 downto 0) := (others => '0');
 
 	signal clocking : std_logic := '1';
 
@@ -37,20 +37,23 @@ begin
 			((10, 23),
 			 (1000, 233168));
 	begin
+		-- Reset
+		rst_n <= '0';
+		wait until clk = '1';
+		rst_n <= '1';
+
+		wait for 1 fs;
 		--  Check each pattern.
 		for i in patterns'range loop
 			--  Set the inputs.
 			value <= std_logic_vector(to_unsigned(patterns(i).value, 16));
-			-- Reset
-			rst_n <= '0';
-			wait until clk = '1';
-			rst_n <= '1'; 
 			--  Wait for the results.
 			wait until busy = '0';
 			--  Check the outputs.
 			assert unsigned(result) = patterns(i).result
 				report "bad result value on test " & integer'image(i)
 				severity error;
+			wait for 1 fs;
 		end loop;
 		report "end of test" severity note;
 		stop;
@@ -59,8 +62,8 @@ begin
 	process
 	begin
 		clk <= '1';
-		wait for 1 fs;
+		wait for 2 fs;
 		clk <= '0';
-		wait for 1 fs;
+		wait for 2 fs;
 	end process;
 end behaviour;
