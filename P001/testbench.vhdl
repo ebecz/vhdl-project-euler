@@ -11,16 +11,16 @@ architecture behaviour of testbench is
 
 	signal clk     : std_logic := '0';
 	signal rst_n   : std_logic := '0';
+	signal start   : std_logic := '0';
 	signal busy    : std_logic;
 	signal result  : std_logic_vector(31 downto 0);
 	signal value   : std_logic_vector(15 downto 0) := (others => '0');
-
-	signal clocking : std_logic := '1';
 
 begin
 	P001_0: entity work.P001 port map(
 		input    => value,
 		clk      => clk,
+		start    => start,
 		rst_n    => rst_n,
 		busy_o   => busy,
 		result_o => result
@@ -47,13 +47,15 @@ begin
 		for i in patterns'range loop
 			--  Set the inputs.
 			value <= std_logic_vector(to_unsigned(patterns(i).value, 16));
+			start <= '1';
 			--  Wait for the results.
 			wait until busy = '0';
-			--  Check the outputs.
 			assert unsigned(result) = patterns(i).result
 				report "bad result value on test " & integer'image(i)
 				severity error;
-			wait for 1 fs;
+			start <= '0';
+			--  Check the outputs.
+			wait for 10 fs;
 		end loop;
 		report "end of test" severity note;
 		stop;

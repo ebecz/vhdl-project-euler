@@ -7,6 +7,7 @@ entity P001 is
 	port(
 		input    : in std_logic_vector(15 downto 0);
 		clk      : in std_logic;
+		start    : in std_logic;
 		rst_n 	 : in std_logic;
 		busy_o   : out std_logic;
 		result_o : out std_logic_vector(31 downto 0)
@@ -14,11 +15,11 @@ entity P001 is
 end P001;
 
 architecture behaviour of P001 is
-	type conv_states is (waiting, converting);
+	type conv_states is (init, converting, waiting);
 
 	-- registers
-	signal state: conv_states := waiting;
-	signal internal_input: unsigned(15 downto 0);
+	signal state: conv_states := init;
+	signal stored_input: unsigned(15 downto 0);
 	signal counter: unsigned(15 downto 0) := x"0001";
 	signal sum: unsigned(31 downto 0);
 	signal counter_0_to_2: integer range 0 to 2;
@@ -26,7 +27,7 @@ architecture behaviour of P001 is
 
 	-- next registers
 	signal state_next: conv_states;
-	signal internal_input_next : unsigned(15 downto 0);
+	signal stored_input_next : unsigned(15 downto 0);
 	signal counter_next: unsigned(15 downto 0);
 	signal sum_next: unsigned(31 downto 0);
 	signal counter_0_to_2_next: integer range 0 to 2;
@@ -42,12 +43,12 @@ begin
 		if rst_n = '0' then
 
 			-- registers
-			state          <= waiting;
+			state          <= init;
 			counter        <= x"0001";
 			sum            <= x"00000000";
 			counter_0_to_2 <= 0;
 			counter_0_to_4 <= 0;
-			internal_input <= (others => '0');
+			stored_input   <= (others => '0');
 
 			-- outputs
 			result_o       <= (others => '0');
@@ -56,7 +57,7 @@ begin
 
 			-- registers
 			state          <= state_next;
-			internal_input <= internal_input_next;
+			stored_input   <= stored_input_next;
 			counter        <= counter_next;
 			sum            <= sum_next;
 			counter_0_to_2 <= counter_0_to_2_next;
@@ -68,18 +69,29 @@ begin
 		end if;
 	end process;
 
-	process (state, internal_input, counter, sum, counter_0_to_2, counter_0_to_4, input)
+	process (state, input, stored_input, counter, sum, counter_0_to_2, counter_0_to_4, start)
 	begin
 		case state is
+			when waiting =>
+				if start = '0' then
+					state_next <= init;
+				else
+					state_next <= waiting;
+				end if;
+
 			when converting =>
 
-				if counter = internal_input then
-					state_next  <= waiting;
-					busy_next <= '1';
+				if counter = stored_input then
+					if start = '0' then
+						state_next  <= init;
+					else
+						state_next <= waiting;
+					end if;
+					busy_next   <= '0';
 					result_next <= std_logic_vector(sum);
 				else
 					state_next <= converting;
-					busy_next <= '1';
+					busy_next  <= '1';
 					if (counter_0_to_2 = 2) or (counter_0_to_4 = 4) then
 						sum_next  <= sum + counter;
 					end if;
@@ -101,14 +113,14 @@ begin
 						counter_0_to_4_next <= counter_0_to_4 + 1;
 				end case;
 
-			when waiting =>
+			when init =>
 
-				if internal_input /= unsigned(input) then
-					internal_input_next <= unsigned(input);
+				if start = '1' then
+					stored_input_next   <= unsigned(input);
 					state_next          <= converting;
 					busy_next 	    <= '1';
 				else
-					state_next <= waiting;
+					state_next <= init;
 					busy_next  <= '0';
 				end if;
 
