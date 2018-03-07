@@ -34,6 +34,8 @@ architecture behaviour of P001 is
 	signal counter_0_to_4_next: integer range 0 to 4;
 
 	-- outputs
+	signal busy   	   : std_logic;
+	signal result      : std_logic_vector(31 downto 0);
 	signal result_next : std_logic_vector(31 downto 0);
 	signal busy_next   : std_logic;
 
@@ -64,19 +66,33 @@ begin
 			counter_0_to_4 <= counter_0_to_4_next;
 
 			-- outputs
-			result_o       <= result_next;
-			busy_o	       <= busy_next;
+			busy           <= busy_next;
+			result         <= result_next;
 		end if;
 	end process;
 
+	busy_o   <= busy;
+	result_o <= result;
+
 	process (state, input, stored_input, counter, sum, counter_0_to_2, counter_0_to_4, start)
 	begin
+
+		-- These values could be kept between the clocks
+		state_next          <= state;
+		stored_input_next   <= stored_input;
+		sum_next            <= sum;
+		busy_next	    <= busy;
+		result_next         <= result;
+
+		-- These should change each clock
+		counter_next        <= x"0001";
+		counter_0_to_2_next <= 0;
+		counter_0_to_4_next <= 0;
+		
 		case state is
 			when waiting =>
 				if start = '0' then
 					state_next <= init;
-				else
-					state_next <= waiting;
 				end if;
 
 			when converting =>
@@ -90,8 +106,6 @@ begin
 					busy_next   <= '0';
 					result_next <= std_logic_vector(sum);
 				else
-					state_next <= converting;
-					busy_next  <= '1';
 					if (counter_0_to_2 = 2) or (counter_0_to_4 = 4) then
 						sum_next  <= sum + counter;
 					end if;
@@ -119,15 +133,9 @@ begin
 					stored_input_next   <= unsigned(input);
 					state_next          <= converting;
 					busy_next 	    <= '1';
-				else
-					state_next <= init;
-					busy_next  <= '0';
 				end if;
 
-				counter_next        <= x"0001";
 				sum_next            <= x"00000000";
-				counter_0_to_2_next <= 0;
-				counter_0_to_4_next <= 0;
 		end case;
 	end process;
 
