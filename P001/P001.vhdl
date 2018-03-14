@@ -53,8 +53,8 @@ begin
 			stored_input   <= (others => '0');
 
 			-- outputs
-			result_o       <= (others => '0');
-			busy_o	       <= '0';
+			result         <= (others => '0');
+			busy	       <= '0';
 		elsif rising_edge(clk) then
 
 			-- registers
@@ -74,7 +74,7 @@ begin
 	busy_o   <= busy;
 	result_o <= result;
 
-	process (state, input, stored_input, counter, sum, counter_0_to_2, counter_0_to_4, start)
+	process (all)
 	begin
 
 		-- These values could be kept between the clocks
