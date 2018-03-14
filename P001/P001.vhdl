@@ -5,63 +5,107 @@ use ieee.numeric_std.all; -- Unsigned
 
 entity P001 is
 	port(
-		input   : in std_logic_vector(15 downto 0);
-		clk     : in std_logic;
-		rst_n	: in std_logic;
-		busy    : out std_logic;
-		result  : out std_logic_vector(31 downto 0)
+		input    : in std_logic_vector(15 downto 0);
+		clk      : in std_logic;
+		start    : in std_logic;
+		rst_n 	 : in std_logic;
+		busy_o   : out std_logic;
+		result_o : out std_logic_vector(31 downto 0)
 	);
 end P001;
 
 architecture behaviour of P001 is
-	type conv_states is (waiting, converting);
+	type conv_states is (init, converting, waiting);
 
-	signal state: conv_states := waiting;
-	signal internal_input: unsigned(15 downto 0);
+	-- registers
+	signal state: conv_states := init;
+	signal stored_input: unsigned(15 downto 0);
 	signal counter: unsigned(15 downto 0) := x"0001";
 	signal sum: unsigned(31 downto 0);
 	signal counter_0_to_2: integer range 0 to 2;
 	signal counter_0_to_4: integer range 0 to 4;
 
-	signal state_next: conv_states := waiting;
-	signal internal_input_next : unsigned(15 downto 0);
-	signal counter_next: unsigned(15 downto 0) := x"0001";
+	-- next registers
+	signal state_next: conv_states;
+	signal stored_input_next : unsigned(15 downto 0);
+	signal counter_next: unsigned(15 downto 0);
 	signal sum_next: unsigned(31 downto 0);
 	signal counter_0_to_2_next: integer range 0 to 2;
 	signal counter_0_to_4_next: integer range 0 to 4;
+
+	-- outputs
+	signal busy   	   : std_logic;
+	signal result      : std_logic_vector(31 downto 0);
+	signal result_next : std_logic_vector(31 downto 0);
+	signal busy_next   : std_logic;
 
 begin
 	process (clk, rst_n)
 	begin
 		if rst_n = '0' then
-			state          <= waiting;
+
+			-- registers
+			state          <= init;
 			counter        <= x"0001";
 			sum            <= x"00000000";
 			counter_0_to_2 <= 0;
 			counter_0_to_4 <= 0;
-			internal_input <= (others => '0');
+			stored_input   <= (others => '0');
+
+			-- outputs
+			result         <= (others => '0');
+			busy	       <= '0';
 		elsif rising_edge(clk) then
+
+			-- registers
 			state          <= state_next;
-			internal_input <= internal_input_next;
+			stored_input   <= stored_input_next;
 			counter        <= counter_next;
 			sum            <= sum_next;
 			counter_0_to_2 <= counter_0_to_2_next;
 			counter_0_to_4 <= counter_0_to_4_next;
+
+			-- outputs
+			busy           <= busy_next;
+			result         <= result_next;
 		end if;
 	end process;
 
-	process (state, internal_input, counter, sum, counter_0_to_2, counter_0_to_4, input)
+	busy_o   <= busy;
+	result_o <= result;
+
+	process (all)
 	begin
+
+		-- These values could be kept between the clocks
+		state_next          <= state;
+		stored_input_next   <= stored_input;
+		sum_next            <= sum;
+		busy_next	    <= busy;
+		result_next         <= result;
+
+		-- These should change each clock
+		counter_next        <= x"0001";
+		counter_0_to_2_next <= 0;
+		counter_0_to_4_next <= 0;
+		
 		case state is
+			when waiting =>
+				if start = '0' then
+					state_next <= init;
+				end if;
+
 			when converting =>
 
-				busy <= '1';
-
-				if counter = internal_input then
-					state_next <= waiting;
-					result <= std_logic_vector(sum);
+				if counter = stored_input then
+					if start = '0' then
+						state_next  <= init;
+					else
+						state_next <= waiting;
+					end if;
+					busy_next   <= '0';
+					result_next <= std_logic_vector(sum);
 				else
-					state_next <= converting;
 					if (counter_0_to_2 = 2) or (counter_0_to_4 = 4) then
 						sum_next  <= sum + counter;
 					end if;
@@ -83,21 +127,15 @@ begin
 						counter_0_to_4_next <= counter_0_to_4 + 1;
 				end case;
 
-			when waiting =>
+			when init =>
 
-				if internal_input /= unsigned(input) then
-					internal_input_next <= unsigned(input);
+				if start = '1' then
+					stored_input_next   <= unsigned(input);
 					state_next          <= converting;
-					busy <= '1';
-				else
-					state_next <= waiting;
-					busy <= '0';
+					busy_next 	    <= '1';
 				end if;
 
-				counter_next        <= x"0001";
 				sum_next            <= x"00000000";
-				counter_0_to_2_next <= 0;
-				counter_0_to_4_next <= 0;
 		end case;
 	end process;
 
