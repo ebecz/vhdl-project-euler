@@ -56,6 +56,9 @@ begin
 			assert unsigned(result) = patterns(i).result
 				report "bad result value on test " & integer'image(i)
 				severity error;
+			assert overflow = '0'
+				report "bad result value on test " & integer'image(i)
+				severity error;
 			start <= '0';
 			--  Check the outputs.
 			wait for 10 fs;
