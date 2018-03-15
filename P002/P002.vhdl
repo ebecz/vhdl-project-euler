@@ -5,59 +5,128 @@ use ieee.numeric_std.all; -- Unsigned
 
 entity P002 is
 	port(
-		ext_ref : in unsigned(31 downto 0);
-		clk     : in std_logic;
-		busy    : out std_logic;
-		error   : out std_logic;
-		result  : out unsigned(31 downto 0)
+		input 	    : in std_logic_vector(31 downto 0);
+		clk	    : in std_logic;
+		start	    : in std_logic;
+		rst_n	    : in std_logic;
+		busy_o	    : out std_logic;
+		result_o    : out std_logic_vector(31 downto 0);
+		overflow_o  : out std_logic
 	);
 end P002;
 
 architecture behaviour of P002 is
-	type conv_states is (waiting, converting);
-	signal state : conv_states := waiting;
-	signal in_ref : unsigned(31 downto 0) := x"00000000";
-	signal Fn1: unsigned(31 downto 0);
-	signal Fn: unsigned(31 downto 0);
-	signal sum_even: unsigned(32 downto 0);
-	signal overflow: std_logic := '0';
+	type conv_states is (init, converting, waiting);
+
+	-- registers
+	signal state        : conv_states := init;
+	signal stored_input : unsigned(31 downto 0) := x"00000000";
+	signal Fn1          : unsigned(31 downto 0) := x"00000001";
+	signal Fn           : unsigned(31 downto 0) := x"00000002";
+	signal sum          : unsigned(32 downto 0) := (others => '0');
+	signal result       : unsigned(31 downto 0) := (others => '0');
+
+	-- next registers
+	signal state_next        : conv_states;
+	signal stored_input_next : unsigned(31 downto 0);
+	signal Fn1_next          : unsigned(31 downto 0);
+	signal Fn_next           : unsigned(31 downto 0);
+	signal sum_next          : unsigned(32 downto 0);
+	signal result_next       : unsigned(31 downto 0);
+
+	-- outputs
+	signal busy   	     : std_logic := '0';
+	signal overflow	     : std_logic := '0';
+	signal busy_next     : std_logic;
+	signal overflow_next : std_logic;
 begin
-	process (clk, ext_ref)
+
+	process (clk, rst_n)
 	begin
-		if in_ref /= ext_ref then
-			state <= converting;
-			Fn1 <= x"00000001";
-			Fn  <= x"00000000";
-			sum_even <= to_unsigned(0, 33);
-			in_ref <= ext_ref;
+		if rst_n = '0' then
+
+			-- registers
+			state        <= init;
+			stored_input <= x"00000000";
+			Fn1  	     <= x"00000001";
+			Fn           <= x"00000002";
+			sum          <= (others => '0');
+			overflow     <= '0';
+
+			-- outputs
+			result       <= (others => '0');
+			busy	     <= '0';
+			overflow     <= '0';
+			
 		elsif rising_edge(clk) then
-			case state is
-				when converting =>
-					if Fn1 < in_ref then
-						Fn  <= Fn1;
-						Fn1 <= Fn1 + Fn;
-						if (Fn1 mod 2) = 1 then
-							sum_even  <= sum_even + Fn1;
-							overflow <= overflow or sum_even(32);
-							error <= overflow;
-						end if;
-					else
-						state <= waiting;
-						result <= sum_even(31 downto 0);
-					end if;
-				when waiting =>
-					--do nothing
-			end case;
+
+			-- registers
+			state        <= state_next;
+			stored_input <= stored_input_next;
+			Fn1          <= Fn1_next;
+			Fn           <= Fn_next;
+			sum          <= sum_next;
+
+			-- outputs
+			busy         <= busy_next;
+			result       <= result_next;
+			overflow     <= overflow_next;
 		end if;
 	end process;
 
-	process (state)
+	busy_o     <= busy;
+	result_o   <= std_logic_vector(result);
+	overflow_o <= overflow;
+
+	process (all)
 	begin
+
+		-- registers
+		state_next        <= state;
+		stored_input_next <= stored_input;
+		Fn1_next          <= Fn1;
+		Fn_next           <= Fn;
+		sum_next          <= sum;
+		overflow_next     <= overflow;
+
+		-- outputs
+		busy_next         <= busy;
+		result_next       <= result;
+		overflow_next     <= overflow;
+
 		case state is
 			when waiting =>
-				busy <= '0';
+				if start = '0' then
+					state_next <= init;
+				end if;
+
 			when converting =>
-				busy <= '1';
+				if Fn < stored_input then
+					Fn1_next  <= Fn;
+					Fn_next <= Fn + Fn1;
+					if Fn(0) = '0' then
+						sum_next  <= sum + Fn;
+						overflow_next <= overflow or sum(32);
+					end if;
+				else
+					result_next <= sum(31 downto 0);
+					busy_next   <= '0';
+					if start = '0' then
+						state_next <= init;
+					else
+						state_next <= waiting;
+					end if;
+				end if;
+
+			when init =>
+				if start = '1' then
+					busy_next  <= '1';
+					state_next <= converting;
+					Fn1_next   <= x"00000001";
+					Fn_next    <= x"00000002";
+					sum_next   <= (others => '0');
+					stored_input_next <= unsigned(input);
+				end if;
 		end case;
 	end process;
 
