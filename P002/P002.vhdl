@@ -19,12 +19,12 @@ architecture behaviour of P002 is
 	type conv_states is (init, converting, waiting);
 
 	-- registers
-	signal state        : conv_states := init;
-	signal stored_input : unsigned(31 downto 0) := x"00000000";
-	signal Fn1          : unsigned(31 downto 0) := x"00000001";
-	signal Fn           : unsigned(31 downto 0) := x"00000002";
-	signal sum          : unsigned(32 downto 0) := (others => '0');
-	signal result       : unsigned(31 downto 0) := (others => '0');
+	signal state        : conv_states;
+	signal stored_input : unsigned(31 downto 0);
+	signal Fn1          : unsigned(31 downto 0);
+	signal Fn           : unsigned(31 downto 0);
+	signal sum          : unsigned(32 downto 0);
+	signal result       : unsigned(31 downto 0);
 
 	-- next registers
 	signal state_next        : conv_states;
