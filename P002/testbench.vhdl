@@ -51,6 +51,9 @@ begin
 			--  Set the inputs.
 			value <= std_logic_vector(to_unsigned(patterns(i).value, 32));
 			start <= '1';
+			-- Wait for a clock pulse to fetch the start
+			wait for 10 fs;
+			wait until clk = '1';
 			--  Wait for the results.
 			wait until busy = '0';
 			assert unsigned(result) = patterns(i).result
@@ -59,9 +62,11 @@ begin
 			assert overflow = '0'
 				report "bad result value on test " & integer'image(i)
 				severity error;
-			start <= '0';
-			--  Check the outputs.
 			wait for 10 fs;
+			wait until clk = '1';
+			start <= '0';
+			wait for 10 fs;
+			wait until clk = '1';
 		end loop;
 		report "end of test" severity note;
 		stop;

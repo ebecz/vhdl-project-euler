@@ -116,11 +116,7 @@ begin
 				else
 					result_next <= sum(31 downto 0);
 					busy_next   <= '0';
-					if start = '0' then
-						state_next <= INIT;
-					else
-						state_next <= WAITING;
-					end if;
+					state_next <= WAITING;
 				end if;
 
 			when WAITING =>
