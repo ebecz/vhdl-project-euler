@@ -16,7 +16,7 @@ entity P002 is
 end P002;
 
 architecture behaviour of P002 is
-	type conv_states is (init, converting, waiting);
+	type conv_states is (INIT, CONVERTING, WAITING);
 
 	-- registers
 	signal state        : conv_states;
@@ -46,7 +46,7 @@ begin
 		if rst_n = '0' then
 
 			-- registers
-			state        <= init;
+			state        <= INIT;
 			stored_input <= x"00000000";
 			Fn1  	     <= x"00000001";
 			Fn           <= x"00000002";
@@ -95,12 +95,17 @@ begin
 		overflow_next     <= overflow;
 
 		case state is
-			when waiting =>
-				if start = '0' then
-					state_next <= init;
+			when INIT =>
+				if start = '1' then
+					busy_next  <= '1';
+					state_next <= CONVERTING;
+					Fn1_next   <= x"00000001";
+					Fn_next    <= x"00000002";
+					sum_next   <= (others => '0');
+					stored_input_next <= unsigned(input);
 				end if;
 
-			when converting =>
+			when CONVERTING =>
 				if Fn < stored_input then
 					Fn1_next  <= Fn;
 					Fn_next <= Fn + Fn1;
@@ -112,20 +117,15 @@ begin
 					result_next <= sum(31 downto 0);
 					busy_next   <= '0';
 					if start = '0' then
-						state_next <= init;
+						state_next <= INIT;
 					else
-						state_next <= waiting;
+						state_next <= WAITING;
 					end if;
 				end if;
 
-			when init =>
-				if start = '1' then
-					busy_next  <= '1';
-					state_next <= converting;
-					Fn1_next   <= x"00000001";
-					Fn_next    <= x"00000002";
-					sum_next   <= (others => '0');
-					stored_input_next <= unsigned(input);
+			when WAITING =>
+				if start = '0' then
+					state_next <= INIT;
 				end if;
 		end case;
 	end process;
