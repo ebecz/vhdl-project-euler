@@ -17,6 +17,8 @@ architecture behaviour of testbench is
 	signal result   : std_logic_vector(31 downto 0);
 	signal value    : std_logic_vector(31 downto 0) := (others => '0');
 
+	constant period : time := 4 fs;
+
 begin
 	P002_0: entity work.P002 port map(
 		input      => value,
@@ -45,28 +47,26 @@ begin
 		wait until clk = '1';
 		rst_n <= '1';
 
-		wait for 1 fs;
+		wait for PERIOD;
 		--  Check each pattern.
 		for i in patterns'range loop
+			wait until clk = '1';
 			--  Set the inputs.
 			value <= std_logic_vector(to_unsigned(patterns(i).value, 32));
+			start <= '0';
+			wait for PERIOD;
 			start <= '1';
-			-- Wait for a clock pulse to fetch the start
-			wait for 10 fs;
-			wait until clk = '1';
+			wait for 2 * PERIOD;
 			--  Wait for the results.
-			wait until busy = '0';
+			while busy = '1' loop
+				wait until clk = '1';
+			end loop;
 			assert unsigned(result) = patterns(i).result
 				report "bad result value on test " & integer'image(i)
 				severity error;
 			assert overflow = '0'
 				report "bad result value on test " & integer'image(i)
 				severity error;
-			wait for 10 fs;
-			wait until clk = '1';
-			start <= '0';
-			wait for 10 fs;
-			wait until clk = '1';
 		end loop;
 		report "end of test" severity note;
 		stop;
@@ -75,8 +75,8 @@ begin
 	process
 	begin
 		clk <= '1';
-		wait for 2 fs;
+		wait for PERIOD/2;
 		clk <= '0';
-		wait for 2 fs;
+		wait for PERIOD/2;
 	end process;
 end behaviour;
