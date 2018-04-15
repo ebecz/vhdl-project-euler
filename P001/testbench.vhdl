@@ -42,7 +42,7 @@ begin
 		wait until clk = '1';
 		rst_n <= '1';
 
-		wait for 1 fs;
+		wait for 1 ps;
 		--  Check each pattern.
 		for i in patterns'range loop
 			--  Set the inputs.
@@ -55,7 +55,7 @@ begin
 				severity error;
 			start <= '0';
 			--  Check the outputs.
-			wait for 10 fs;
+			wait for 10 ps;
 		end loop;
 		report "end of test" severity note;
 		stop;
@@ -64,8 +64,8 @@ begin
 	process
 	begin
 		clk <= '1';
-		wait for 2 fs;
+		wait for 2 ps;
 		clk <= '0';
-		wait for 2 fs;
+		wait for 2 ps;
 	end process;
 end behaviour;
